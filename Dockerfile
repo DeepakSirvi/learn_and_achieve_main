@@ -1,15 +1,21 @@
-FROM ubuntu:latest AS build
+# Stage 1: Build the Maven project
+FROM maven:3.8.4-openjdk-17 AS build
 
-RUN apt-get update
-RUN apt-get install openjdk-17-jdk -y
+WORKDIR /app
+
 COPY . .
 
-RUN ./gradlew bootJar --no-daemon
+# Build the Maven project
+RUN mvn clean package
 
+# Stage 2: Create the final image
 FROM openjdk:17-jdk-slim
 
 EXPOSE 8080
 
-COPY --from=build /build/libs/demo-1.jar app.jar
+WORKDIR /app
+
+# Copy the built JAR file from the previous stage
+COPY --from=build /app/target/demo-1.jar app.jar
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
